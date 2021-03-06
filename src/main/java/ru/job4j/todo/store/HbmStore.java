@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.job4j.todo.models.Item;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,10 +40,19 @@ public class HbmStore implements Store {
     @Override
     public Item save(Item item) {
         Session session = sf.openSession();
-        Transaction tx = session.beginTransaction();
-        session.save(item);
-        tx.commit();
-        session.close();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            session.save(item);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            LOG.error("Ошибка записи.", e);
+        } finally {
+            session.close();
+        }
         return item;
     }
 
@@ -54,13 +64,20 @@ public class HbmStore implements Store {
     @Override
     public boolean update(Item item) {
         boolean rsl = true;
-        try (Session session = sf.openSession()) {
-            Transaction tx = session.beginTransaction();
+        Session session = sf.openSession();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
             session.update(item);
             tx.commit();
-        } catch (HibernateException e) {
+        } catch (Exception e) {
+            if (tx != null) {
+                tx.rollback();
+            }
             LOG.error("Ошибка обновления.", e);
             rsl = false;
+        } finally {
+            session.close();
         }
         return rsl;
     }
@@ -72,11 +89,21 @@ public class HbmStore implements Store {
      */
     @Override
     public Item findById(int id) {
+        Item item = null;
         Session session = sf.openSession();
-        Transaction tx = session.beginTransaction();
-        Item item = session.get(Item.class, id);
-        tx.commit();
-        session.close();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            item = session.get(Item.class, id);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            LOG.error("Ошибка запроса.", e);
+        } finally {
+            session.close();
+        }
         return item;
     }
 
@@ -86,12 +113,22 @@ public class HbmStore implements Store {
      */
     @Override
     public List<Item> findAll() {
+        List items = new ArrayList<>();
         Session session = sf.openSession();
-        Transaction tx = session.beginTransaction();
-        Query query = session.createQuery("from Item");
-        List items = query.list();
-        tx.commit();
-        session.close();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            Query query = session.createQuery("from Item");
+            items = query.list();
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            LOG.error("Ошибка запроса.", e);
+        } finally {
+            session.close();
+        }
         return items;
     }
 
@@ -103,13 +140,23 @@ public class HbmStore implements Store {
      */
     @Override
     public List<Item> findIsDone(boolean bool) {
+        List items = new ArrayList<>();
         Session session = sf.openSession();
-        Transaction tx = session.beginTransaction();
-        Query query = session.createQuery("from Item I where I.done = :bool");
-        query.setParameter("bool", bool);
-        List items = query.list();
-        tx.commit();
-        session.close();
+        Transaction tx = null;
+        try {
+            tx = session.beginTransaction();
+            Query query = session.createQuery("from Item I where I.done = :bool");
+            query.setParameter("bool", bool);
+            items = query.list();
+            tx.commit();
+        } catch (Exception e) {
+            if (tx != null) {
+                tx.rollback();
+            }
+            LOG.error("Ошибка запроса.", e);
+        } finally {
+            session.close();
+        }
         return items;
     }
 

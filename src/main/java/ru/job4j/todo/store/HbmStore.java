@@ -1,6 +1,5 @@
 package ru.job4j.todo.store;
 
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;

@@ -1,4 +1,4 @@
-
+[![Build Status](https://travis-ci.com/RvDmitry/job4j_todo.svg?branch=master)](https://travis-ci.com/RvDmitry/job4j_todo)
 # TODO List 
 
 **О проекте:**

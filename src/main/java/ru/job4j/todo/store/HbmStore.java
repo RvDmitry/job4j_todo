@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.job4j.todo.models.Item;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Class HbmStore
@@ -38,21 +38,10 @@ public class HbmStore implements Store {
      */
     @Override
     public Item save(Item item) {
-        Session session = sf.openSession();
-        Transaction tx = null;
-        try {
-            tx = session.beginTransaction();
+        return this.tx(session -> {
             session.save(item);
-            tx.commit();
-        } catch (Exception e) {
-            if (tx != null) {
-                tx.rollback();
-            }
-            LOG.error("Ошибка записи.", e);
-        } finally {
-            session.close();
-        }
-        return item;
+            return item;
+        });
     }
 
     /**
@@ -62,23 +51,10 @@ public class HbmStore implements Store {
      */
     @Override
     public boolean update(Item item) {
-        boolean rsl = true;
-        Session session = sf.openSession();
-        Transaction tx = null;
-        try {
-            tx = session.beginTransaction();
+        return this.tx(session -> {
             session.update(item);
-            tx.commit();
-        } catch (Exception e) {
-            if (tx != null) {
-                tx.rollback();
-            }
-            LOG.error("Ошибка обновления.", e);
-            rsl = false;
-        } finally {
-            session.close();
-        }
-        return rsl;
+            return true;
+        });
     }
 
     /**
@@ -88,22 +64,7 @@ public class HbmStore implements Store {
      */
     @Override
     public Item findById(int id) {
-        Item item = null;
-        Session session = sf.openSession();
-        Transaction tx = null;
-        try {
-            tx = session.beginTransaction();
-            item = session.get(Item.class, id);
-            tx.commit();
-        } catch (Exception e) {
-            if (tx != null) {
-                tx.rollback();
-            }
-            LOG.error("Ошибка запроса.", e);
-        } finally {
-            session.close();
-        }
-        return item;
+        return this.tx(session -> session.get(Item.class, id));
     }
 
     /**
@@ -112,23 +73,7 @@ public class HbmStore implements Store {
      */
     @Override
     public List<Item> findAll() {
-        List items = new ArrayList<>();
-        Session session = sf.openSession();
-        Transaction tx = null;
-        try {
-            tx = session.beginTransaction();
-            Query query = session.createQuery("from Item");
-            items = query.list();
-            tx.commit();
-        } catch (Exception e) {
-            if (tx != null) {
-                tx.rollback();
-            }
-            LOG.error("Ошибка запроса.", e);
-        } finally {
-            session.close();
-        }
-        return items;
+        return this.tx(session -> session.createQuery("from Item").list());
     }
 
     /**
@@ -139,24 +84,11 @@ public class HbmStore implements Store {
      */
     @Override
     public List<Item> findIsDone(boolean bool) {
-        List items = new ArrayList<>();
-        Session session = sf.openSession();
-        Transaction tx = null;
-        try {
-            tx = session.beginTransaction();
+        return this.tx(session -> {
             Query query = session.createQuery("from Item I where I.done = :bool");
             query.setParameter("bool", bool);
-            items = query.list();
-            tx.commit();
-        } catch (Exception e) {
-            if (tx != null) {
-                tx.rollback();
-            }
-            LOG.error("Ошибка запроса.", e);
-        } finally {
-            session.close();
-        }
-        return items;
+            return query.list();
+        });
     }
 
     /**
@@ -166,5 +98,26 @@ public class HbmStore implements Store {
     @Override
     public void close() throws Exception {
         StandardServiceRegistryBuilder.destroy(registry);
+    }
+
+    /**
+     * Метод реализует обертку над всеми транзакциями Hibernate к базе данных.
+     * @param command Запрос к базе данных, который нужно выполнить.
+     * @param <T> Тип возвращаемого значения.
+     * @return Результат запроса.
+     */
+    private <T> T tx(final Function<Session, T> command) {
+        final Session session = sf.openSession();
+        final Transaction tx = session.beginTransaction();
+        try {
+            T rsl = command.apply(session);
+            tx.commit();
+            return rsl;
+        } catch (final Exception e) {
+            tx.rollback();
+            throw e;
+        } finally {
+            session.close();
+        }
     }
 }

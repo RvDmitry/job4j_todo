@@ -1,6 +1,7 @@
 package ru.job4j.todo.services;
 
 import ru.job4j.todo.models.Item;
+import ru.job4j.todo.models.User;
 import ru.job4j.todo.store.Store;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public class ItemService {
     private final Store store;
 
     /**
-     * Конструтор инициализирует объект-сервис.
+     * Конструктор инициализирует объект-сервис.
      * @param store DAO класс.
      */
     public ItemService(Store store) {
@@ -46,10 +47,20 @@ public class ItemService {
     /**
      * Метод находит задание по его идентификатору.
      * @param id Идентификатор задания.
-     * @return Дело.
+     * @return Задание.
      */
     public Item findItem(int id) {
-        return store.findById(id);
+        return store.findItemById(id);
+    }
+
+    /**
+     * Метод находит задание по его идентификатору для заданного пользователя.
+     * @param id Идентификатор задания.
+     * @param user Пользователь, задание которого нужно найти.
+     * @return Задание.
+     */
+    public Item findItemForUser(int id, User user) {
+        return store.findItemByIdForUser(id, user);
     }
 
     /**
@@ -57,7 +68,16 @@ public class ItemService {
      * @return Список заданий.
      */
     public List<Item> findItems() {
-        return store.findAll();
+        return store.findAllItems();
+    }
+
+    /**
+     * Метод возвращает список всех заданий для заданного пользователя.
+     * @param user Пользователь, задания которого нужно найти.
+     * @return Список заданий.
+     */
+    public List<Item> findItemsForUser(User user) {
+        return store.findAllItemsForUser(user);
     }
 
     /**
@@ -66,6 +86,25 @@ public class ItemService {
      * @return Список заданий.
      */
     public List<Item> findItemsIsDone(boolean bool) {
-        return store.findIsDone(bool);
+        return store.findItemsIsDone(bool);
+    }
+
+    /**
+     * Метод возвращает список выполненных либо невыполненных заданий для заданного пользователя.
+     * @param bool Параметр, определяющий статус заданий.
+     * @param user Пользователь, задания которого нужно найти.
+     * @return Список заданий.
+     */
+    public List<Item> findItemsIsDoneForUser(boolean bool, User user) {
+        return store.findItemsIsDoneForUser(bool, user);
+    }
+
+    /**
+     * Метод возвращает количество заданий у заданного пользователя.
+     * @param user Пользователь.
+     * @return Количество заданий.
+     */
+    public int number(User user) {
+        return store.numberForUser(user);
     }
 }

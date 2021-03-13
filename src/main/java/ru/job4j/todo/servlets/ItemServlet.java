@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.job4j.todo.models.Item;
+import ru.job4j.todo.models.User;
 import ru.job4j.todo.services.ItemService;
 import ru.job4j.todo.store.HbmStore;
 
@@ -44,17 +45,22 @@ public class ItemServlet extends HttpServlet {
                          HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("text/plain");
         resp.setCharacterEncoding("UTF-8");
+        User user = (User) req.getSession().getAttribute("user");
         String find = req.getParameter("find");
         List<Item> items = null;
         if (find.equals("all")) {
-            items = SERVICE.findItems();
+            items = SERVICE.findItemsForUser(user);
         } else {
-            items = SERVICE.findItemsIsDone(Boolean.parseBoolean(find));
+            items = SERVICE.findItemsIsDoneForUser(Boolean.parseBoolean(find), user);
         }
+        LOG.info("Получено {} заданий для пользователя {}", items.size(), user);
         Gson gson = new Gson();
         JSONObject json = new JSONObject();
         for (Item item : items) {
-            json.put(String.valueOf(item.getId()), gson.toJson(item));
+            json.put(String.valueOf(item.getNumber()), gson.toJson(item));
+        }
+        if (items.isEmpty()) {
+            json.put("0", gson.toJson(new Item("", user, 0)));
         }
         PrintWriter out = resp.getWriter();
         out.print(json);
@@ -74,23 +80,21 @@ public class ItemServlet extends HttpServlet {
         resp.setContentType("text/plain");
         resp.setCharacterEncoding("UTF-8");
         String desc = req.getParameter("desc");
+        User user = (User) req.getSession().getAttribute("user");
         String id = req.getParameter("id");
         if (id == null) {
-            LOG.info("Получено описание дела: {}", desc);
-            Item item = new Item(desc);
-            LOG.info("Создано дело {}", item);
+            LOG.info("Получено описание задания: {}, для пользователя {}", desc, user);
+            int num = SERVICE.number(user);
+            Item item = new Item(desc, user, num + 1);
+            LOG.info("Создано задание {}", item);
             item = SERVICE.saveItem(item);
-            LOG.info("Дело {} записано в БД", item);
-            Gson gson = new Gson();
-            PrintWriter out = resp.getWriter();
-            out.print(gson.toJson(item));
-            out.flush();
+            LOG.info("Задание {} сохранено в БД.", item);
         } else {
-            LOG.info("Дело № {} выполнено.", id);
-            Item item = SERVICE.findItem(Integer.parseInt(id));
+            LOG.info("Задание № {} выполнено.", id);
+            Item item = SERVICE.findItemForUser(Integer.parseInt(id), user);
             item.setDone(true);
             if (SERVICE.updateItem(item)) {
-                LOG.info("Дело {} в базе обновлено.", item);
+                LOG.info("Задание {} в базе обновлено.", item);
             }
         }
     }

@@ -10,6 +10,7 @@ import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.job4j.todo.models.Item;
+import ru.job4j.todo.models.User;
 
 import java.util.List;
 import java.util.function.Function;
@@ -45,6 +46,19 @@ public class HbmStore implements Store {
     }
 
     /**
+     * Метод сохраняет пользователя в БД.
+     * @param user Пользователь.
+     * @return Сохраненный пользователь.
+     */
+    @Override
+    public User save(User user) {
+        return this.tx(session -> {
+            session.save(user);
+            return user;
+        });
+    }
+
+    /**
      * Метод обновляет задание в БД.
      * @param item Задание, которое нужно обновить.
      * @return true, если задание обновлено успешно, иначе false.
@@ -63,8 +77,38 @@ public class HbmStore implements Store {
      * @return Задание.
      */
     @Override
-    public Item findById(int id) {
+    public Item findItemById(int id) {
         return this.tx(session -> session.get(Item.class, id));
+    }
+
+    /**
+     * Метод возвращает задание из БД по его идентификатору для заданного пользователя.
+     * @param id Идентификатор задания.
+     * @param user Пользователь, задание для которого нужно найти.
+     * @return Задание.
+     */
+    @Override
+    public Item findItemByIdForUser(int id, User user) {
+        return this.tx(session -> {
+            Query query = session.createQuery("from Item where user = : user and id = :id")
+                    .setParameter("user", user)
+                    .setParameter("id", id);
+            return (Item) query.uniqueResult();
+        });
+    }
+
+    /**
+     * Метод возвращает пользователя из БД по его email.
+     * @param email Email пользователя.
+     * @return Пользователь.
+     */
+    @Override
+    public User findUserByEmail(String email) {
+        return this.tx(session -> {
+            Query query = session.createQuery("from User where email = :email")
+                    .setParameter("email", email);
+            return (User) query.uniqueResult();
+        });
     }
 
     /**
@@ -72,8 +116,22 @@ public class HbmStore implements Store {
      * @return Список заданий.
      */
     @Override
-    public List<Item> findAll() {
+    public List<Item> findAllItems() {
         return this.tx(session -> session.createQuery("from Item").list());
+    }
+
+    /**
+     * Метод возвращает список всех заданий из БД для заданного пользователя.
+     * @param user Пользователь, задания для которого нужно найти.
+     * @return Список заданий.
+     */
+    @Override
+    public List<Item> findAllItemsForUser(User user) {
+        return this.tx(session -> {
+            Query query = session.createQuery("from Item where user = : user ")
+                    .setParameter("user", user);
+            return query.list();
+        });
     }
 
     /**
@@ -83,11 +141,42 @@ public class HbmStore implements Store {
      * @return Список заданий.
      */
     @Override
-    public List<Item> findIsDone(boolean bool) {
+    public List<Item> findItemsIsDone(boolean bool) {
         return this.tx(session -> {
-            Query query = session.createQuery("from Item I where I.done = :bool");
+            Query query = session.createQuery("from Item where done = :bool");
             query.setParameter("bool", bool);
             return query.list();
+        });
+    }
+
+    /**
+     * Метод возвращает список заданий для заданного пользователя,
+     * которые в зависимости от переданного параметра, будут выполнены либо нет.
+     * @param bool Параметр задающий условие, выполнено ли задание.
+     * @param user Пользователь, задания для которого нужно найти.
+     * @return Список заданий.
+     */
+    @Override
+    public List<Item> findItemsIsDoneForUser(boolean bool, User user) {
+        return this.tx(session -> {
+            Query query = session.createQuery("from Item where user = : user and done = :bool")
+                    .setParameter("user", user)
+                    .setParameter("bool", bool);
+            return query.list();
+        });
+    }
+
+    /**
+     * Метод возвращает количество заданий у заданного пользователя.
+     * @param user Пользователь.
+     * @return Количество заданий.
+     */
+    @Override
+    public int numberForUser(User user) {
+        return this.tx(session -> {
+            Query query = session.createQuery("select count(*) from Item where user = :user")
+                    .setParameter("user", user);
+            return Integer.valueOf(String.valueOf(query.uniqueResult()));
         });
     }
 
@@ -115,6 +204,7 @@ public class HbmStore implements Store {
             return rsl;
         } catch (final Exception e) {
             tx.rollback();
+            LOG.error("Ошибка транзакции.", e);
             throw e;
         } finally {
             session.close();

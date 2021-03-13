@@ -14,9 +14,9 @@ function send() {
         url: 'http://localhost:8080/todo/items',
         data: 'desc=' + $('#desc').val(),
         dataType: 'text'
-    }).done(function(data) {
-        display(data);
+    }).done(function() {
         $('#desc').val('');
+        load();
     }).fail(function(err){
         alert(err);
     });
@@ -35,13 +35,13 @@ function load() {
         $("#table td").parent().remove();
         let json = JSON.parse(data);
         $.each(json, function(index, value) {
-            display(value);
+            display(index, value);
         });
     }).fail(function(err){
         alert(err);
     });
 }
-function display(data) {
+function display(index, data) {
     let item = JSON.parse(data);
     let status = '';
     let complete = '';
@@ -54,6 +54,10 @@ function display(data) {
         minute: "numeric",
         second: "numeric"
     });
+    document.getElementById("user").innerHTML = "Добро пожаловать, " + item.user.name;
+    if (item.id === 0) {
+        return;
+    }
     if (item.done === true) {
         status = '<span class="glyphicon glyphicon-ok"></span>';
     } else {
@@ -61,7 +65,7 @@ function display(data) {
         complete = '<input type="button" class="btn btn-primary" id="' + item.id + '" onclick="done(id)" value="Завершить">';
     }
     $('#table tr:last').after('<tr>' +
-        '<td style="vertical-align: middle">' + item.id +'</td>' +
+        '<td style="vertical-align: middle">' + index +'</td>' +
         '<td style="vertical-align: middle">' + item.description +'</td>' +
         '<td style="vertical-align: middle">' + formatter.format(new Date(item.created)) +'</td>' +
         '<td style="vertical-align: middle">' + status +'</td>' +

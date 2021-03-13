@@ -20,6 +20,10 @@ public class Item {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     /**
+     * Номер задания у заданного пользователя.
+     */
+    private int number;
+    /**
      * Описание задания.
      */
     private String description;
@@ -32,19 +36,27 @@ public class Item {
      */
     private boolean done;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     /**
      * Конструктор инициализирует объект.
      */
     public Item() { }
 
     /**
-     * Конструктор инициализирует задания.
+     * Конструктор создает задание.
      * @param description Описание задания.
+     * @param user Пользователь, для которого создается задание.
+     * @param number Номер задания.
      */
-    public Item(String description) {
+    public Item(String description, User user, int number) {
         this.description = description;
         long droppedMillis = 1000 * (System.currentTimeMillis() / 1000);
         created = new Timestamp(droppedMillis);
+        this.user = user;
+        this.number = number;
     }
 
     /**
@@ -61,6 +73,22 @@ public class Item {
      */
     public void setId(int id) {
         this.id = id;
+    }
+
+    /**
+     * Метод возвращает номер задания у пользователя.
+     * @return Номер задания.
+     */
+    public int getNumber() {
+        return number;
+    }
+
+    /**
+     * Метод задает номер задания у пользователя.
+     * @param number Номер задания.
+     */
+    public void setNumber(int number) {
+        this.number = number;
     }
 
     /**
@@ -111,6 +139,22 @@ public class Item {
         this.done = done;
     }
 
+    /**
+     * Метод возвращает пользователя задания.
+     * @return Пользователь.
+     */
+    public User getUser() {
+        return user;
+    }
+
+    /**
+     * Метод задает пользователя задания.
+     * @param user Пользователь.
+     */
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -132,9 +176,11 @@ public class Item {
     public String toString() {
         return "Item{"
                 + "id=" + id
+                + ", number=" + number
                 + ", description='" + description + '\''
                 + ", created=" + created
                 + ", done=" + done
+                + ", user=" + user
                 + '}';
     }
 }

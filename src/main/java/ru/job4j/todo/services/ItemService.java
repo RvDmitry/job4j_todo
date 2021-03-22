@@ -54,16 +54,6 @@ public class ItemService {
     }
 
     /**
-     * Метод находит задание по его идентификатору для заданного пользователя.
-     * @param id Идентификатор задания.
-     * @param user Пользователь, задание которого нужно найти.
-     * @return Задание.
-     */
-    public Item findItemForUser(int id, User user) {
-        return store.findItemByIdForUser(id, user);
-    }
-
-    /**
      * Метод возвращает список всех заданий.
      * @return Список заданий.
      */

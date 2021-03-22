@@ -2,6 +2,8 @@ package ru.job4j.todo.models;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -41,22 +43,26 @@ public class Item {
     private User user;
 
     /**
-     * Конструктор инициализирует объект.
+     * Список категорий для заданной задачи.
      */
-    public Item() { }
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private List<Category> categories = new ArrayList<>();
 
     /**
-     * Конструктор создает задание.
+     * Фабрика создает задание.
      * @param description Описание задания.
      * @param user Пользователь, для которого создается задание.
      * @param number Номер задания.
+     * @return Задание.
      */
-    public Item(String description, User user, int number) {
-        this.description = description;
+    public static Item of(String description, User user, int number) {
+        Item item = new Item();
+        item.description = description;
         long droppedMillis = 1000 * (System.currentTimeMillis() / 1000);
-        created = new Timestamp(droppedMillis);
-        this.user = user;
-        this.number = number;
+        item.created = new Timestamp(droppedMillis);
+        item.user = user;
+        item.number = number;
+        return item;
     }
 
     /**
@@ -155,6 +161,30 @@ public class Item {
         this.user = user;
     }
 
+    /**
+     * Метод возвращает список категорий, к которой относится задание.
+     * @return Список категорий.
+     */
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    /**
+     * Метод задает список категорий для задания.
+     * @param categories Список категорий.
+     */
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
+    }
+
+    /**
+     * Метод добавляет категорию в список.
+     * @param category Категория.
+     */
+    public void addCategory(Category category) {
+        categories.add(category);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -181,6 +211,7 @@ public class Item {
                 + ", created=" + created
                 + ", done=" + done
                 + ", user=" + user
+                + ", categories=" + categories
                 + '}';
     }
 }

@@ -3,6 +3,11 @@ function validate() {
         alert('Введите описание задания');
         return false;
     }
+    let s = $('#cIds').val().length;
+    if(s === 0) {
+        alert('Вы не выбрали категорию.');
+        return false;
+    }
     return true;
 }
 function send() {
@@ -10,18 +15,23 @@ function send() {
         return false;
     }
     $.ajax({
-        type: 'POST',
+        type: "POST",
         url: 'http://localhost:8080/todo/items',
-        data: 'desc=' + $('#desc').val(),
-        dataType: 'text'
-    }).done(function() {
-        $('#desc').val('');
-        load();
-    }).fail(function(err){
-        alert(err);
+        contentType: "application/json",
+        data: JSON.stringify({
+            desc: $('#desc').val(),
+            cats: $('#cIds').val()
+        }),
+        success: function() {
+            $('#desc').val('');
+            loadItems();
+        },
+        error: function(err) {
+            alert(err);
+        }
     });
 }
-function load() {
+function loadItems() {
     let find = document.getElementById("findAll").checked;
     if (find === true) {
         find = 'all';
@@ -30,11 +40,10 @@ function load() {
         type: 'GET',
         url: 'http://localhost:8080/todo/items',
         data: 'find=' + find,
-        dataType: 'text'
-    }).done(function(data) {
+        dataType: 'json'
+    }).done(function(responseJson) {
         $("#table td").parent().remove();
-        let json = JSON.parse(data);
-        $.each(json, function(index, value) {
+        $.each(responseJson, function(index, value) {
             display(index, value);
         });
     }).fail(function(err){
@@ -54,20 +63,21 @@ function display(index, data) {
         minute: "numeric",
         second: "numeric"
     });
-    document.getElementById("user").innerHTML = "Добро пожаловать, " + item.user.name;
-    if (item.id === 0) {
-        return;
-    }
     if (item.done === true) {
-        status = '<span class="glyphicon glyphicon-ok"></span>';
+        status = '<i class="fa fa-check-square-o"></i>';
     } else {
-        status = '<span class="glyphicon glyphicon-remove"></span>';
+        status = '<i class="fa fa-minus-square-o"></i>';
         complete = '<input type="button" class="btn btn-primary" id="' + item.id + '" onclick="done(id)" value="Завершить">';
     }
+    let cats = '';
+    item.categories.forEach(function callback(currentValue) {
+        cats += currentValue.name + '<br>';
+    });
     $('#table tr:last').after('<tr>' +
         '<td style="vertical-align: middle">' + index +'</td>' +
         '<td style="vertical-align: middle">' + item.description +'</td>' +
         '<td style="vertical-align: middle">' + formatter.format(new Date(item.created)) +'</td>' +
+        '<td style="vertical-align: middle">' + cats +'</td>' +
         '<td style="vertical-align: middle">' + status +'</td>' +
         '<td>' + complete +'</td>' +
         '</tr>');
@@ -79,11 +89,12 @@ function done(id) {
         data: 'id=' + id,
         dataType: 'text'
     }).done(function() {
-        load();
+        loadItems();
     }).fail(function(err){
         alert(err);
     });
 }
 $(document).ready(function() {
-    load();
+    loadItems();
+    loadCats();
 });

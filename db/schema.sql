@@ -13,3 +13,9 @@ create table users(
     email text unique not null,
     password text not null
 );
+
+create table categories(
+    id serial primary key,
+    name text unique not null,
+    user_id int references users(id) not null
+);

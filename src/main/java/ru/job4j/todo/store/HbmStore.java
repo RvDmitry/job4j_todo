@@ -9,6 +9,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.job4j.todo.models.Category;
 import ru.job4j.todo.models.Item;
 import ru.job4j.todo.models.User;
 
@@ -59,6 +60,19 @@ public class HbmStore implements Store {
     }
 
     /**
+     * Метод сохраняет категорию в БД.
+     * @param category Категория.
+     * @return Сохраненная категория.
+     */
+    @Override
+    public Category save(Category category) {
+        return this.tx(session -> {
+            session.save(category);
+            return category;
+        });
+    }
+
+    /**
      * Метод обновляет задание в БД.
      * @param item Задание, которое нужно обновить.
      * @return true, если задание обновлено успешно, иначе false.
@@ -78,23 +92,22 @@ public class HbmStore implements Store {
      */
     @Override
     public Item findItemById(int id) {
-        return this.tx(session -> session.get(Item.class, id));
-    }
-
-    /**
-     * Метод возвращает задание из БД по его идентификатору для заданного пользователя.
-     * @param id Идентификатор задания.
-     * @param user Пользователь, задание для которого нужно найти.
-     * @return Задание.
-     */
-    @Override
-    public Item findItemByIdForUser(int id, User user) {
         return this.tx(session -> {
-            Query query = session.createQuery("from Item where user = : user and id = :id")
-                    .setParameter("user", user)
+            Query query = session.createQuery("Select i from Item i "
+                    + "join fetch i.categories where i.id = :id")
                     .setParameter("id", id);
             return (Item) query.uniqueResult();
         });
+    }
+
+    /**
+     * Метод возвращает категорию из БД по ее идентификатору.
+     * @param id Идентификатор категории.
+     * @return Категория.
+     */
+    @Override
+    public Category findCategoryById(int id) {
+        return this.tx(session -> session.get(Category.class, id));
     }
 
     /**
@@ -117,7 +130,20 @@ public class HbmStore implements Store {
      */
     @Override
     public List<Item> findAllItems() {
-        return this.tx(session -> session.createQuery("from Item").list());
+        return this.tx(session -> {
+            Query query = session.createQuery("Select i from Item i "
+                    + "join fetch i.categories");
+            return query.list();
+        });
+    }
+
+    /**
+     * Метод возвращает список всех категорий из БД.
+     * @return Список категорий.
+     */
+    @Override
+    public List<Category> findAllCategories() {
+        return this.tx(session -> session.createQuery("from Category").list());
     }
 
     /**
@@ -128,7 +154,22 @@ public class HbmStore implements Store {
     @Override
     public List<Item> findAllItemsForUser(User user) {
         return this.tx(session -> {
-            Query query = session.createQuery("from Item where user = : user ")
+            Query query = session.createQuery("Select i from Item i "
+                    + "join fetch i.categories where i.user = :user")
+                    .setParameter("user", user);
+            return query.list();
+        });
+    }
+
+    /**
+     * Метод возвращает список всех категорий из БД для заданного пользователя.
+     * @param user Пользователь, категории для которого нужно найти.
+     * @return Список категорий.
+     */
+    @Override
+    public List<Category> findAllCategoriesForUser(User user) {
+        return this.tx(session -> {
+            Query query = session.createQuery("from Category where user = :user")
                     .setParameter("user", user);
             return query.list();
         });
@@ -143,8 +184,9 @@ public class HbmStore implements Store {
     @Override
     public List<Item> findItemsIsDone(boolean bool) {
         return this.tx(session -> {
-            Query query = session.createQuery("from Item where done = :bool");
-            query.setParameter("bool", bool);
+            Query query = session.createQuery("Select i from Item i "
+                    + "join fetch i.categories where i.done = :bool")
+                    .setParameter("bool", bool);
             return query.list();
         });
     }
@@ -159,7 +201,8 @@ public class HbmStore implements Store {
     @Override
     public List<Item> findItemsIsDoneForUser(boolean bool, User user) {
         return this.tx(session -> {
-            Query query = session.createQuery("from Item where user = : user and done = :bool")
+            Query query = session.createQuery("Select i from Item i "
+                    + "join fetch i.categories where i.user = :user and i.done = :bool")
                     .setParameter("user", user)
                     .setParameter("bool", bool);
             return query.list();

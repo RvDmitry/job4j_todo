@@ -1,5 +1,6 @@
 package ru.job4j.todo.store;
 
+import ru.job4j.todo.models.Category;
 import ru.job4j.todo.models.Item;
 import ru.job4j.todo.models.User;
 
@@ -27,6 +28,13 @@ public interface Store extends AutoCloseable {
     User save(User user);
 
     /**
+     * Метод сохраняет категорию в хранилище даннах.
+     * @param category Категория.
+     * @return Сохраненная категория.
+     */
+    Category save(Category category);
+
+    /**
      * Метод обновляет задание в хранилище.
      * @param item Задание, которое нужно обновить.
      * @return true, если задание обновлено успешно, иначе false.
@@ -41,12 +49,11 @@ public interface Store extends AutoCloseable {
     Item findItemById(int id);
 
     /**
-     * Метод возвращает задание из хранилища по его идентификатору для заданного пользователя.
-     * @param id Идентификатор задания.
-     * @param user Пользователь, задание для которого нужно найти.
-     * @return Задание.
+     * Метод возвращает категорию их хранилища по ее идентификатору.
+     * @param id Идентификатор категории.
+     * @return Категория.
      */
-    Item findItemByIdForUser(int id, User user);
+    Category findCategoryById(int id);
 
     /**
      * Метод возвращает пользователя из хранилища по его email.
@@ -62,11 +69,24 @@ public interface Store extends AutoCloseable {
     List<Item> findAllItems();
 
     /**
+     * Метод возвращает список всех категорий из хранилища.
+     * @return Список категорий.
+     */
+    List<Category> findAllCategories();
+
+    /**
      * Метод возвращает список всех заданий из хранилища для заданного пользователя.
      * @param user Пользователь, задания для которого нужно найти.
      * @return Список заданий.
      */
     List<Item> findAllItemsForUser(User user);
+
+    /**
+     * Метод возвращает список всех категорий из хранилища для заданного пользователя.
+     * @param user Пользователь, категории для которого нужно найти.
+     * @return Список категорий.
+     */
+    List<Category> findAllCategoriesForUser(User user);
 
     /**
      * Метод возвращает список заданий, которые в зависимости

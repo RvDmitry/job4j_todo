@@ -1,8 +1,8 @@
 package ru.job4j.todo.models;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,7 +32,8 @@ public class Item {
     /**
      * Дата и время создания задания.
      */
-    private Timestamp created;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date created;
     /**
      * Готовность задания.
      */
@@ -59,7 +60,7 @@ public class Item {
         Item item = new Item();
         item.description = description;
         long droppedMillis = 1000 * (System.currentTimeMillis() / 1000);
-        item.created = new Timestamp(droppedMillis);
+        item.created = new Date(droppedMillis);
         item.user = user;
         item.number = number;
         return item;
@@ -117,7 +118,7 @@ public class Item {
      * Метод возвращает дату создания задания.
      * @return Дата создания.
      */
-    public Timestamp getCreated() {
+    public Date getCreated() {
         return created;
     }
 
@@ -125,7 +126,7 @@ public class Item {
      * Метод задает дату создания задания.
      * @param created Дата создания.
      */
-    public void setCreated(Timestamp created) {
+    public void setCreated(Date created) {
         this.created = created;
     }
 
